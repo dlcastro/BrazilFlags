@@ -4,10 +4,11 @@ library(tidyverse)
 library(purrr)
 library(stringi)
 library(furrr)
+library(renv)
 
 
 # Utilizar 3 cores --------------------------------------------------------
-# Mude aqui para aumentar os Cores do processador
+# Mude aqui para aumentar ou diminuir os Cores do processador em uso
 plan(multisession, workers = 3)
 set.seed(123)
 
@@ -59,7 +60,12 @@ flag_collect <- function(x) {
 
 
 # Comando para encontrar url da bandeira em formato gif -------------------
-
+# Pelo que notei, a url que salvei em site não é a mesma da bandeira
+# Parece que há apenas um "-" a menos. Contudo, prefiro fazer o trabalho que,
+# apesar de parecer mais longo, é garantido que vou pegar todas as bandeiras.
+# Ou seja, irei buscar página por página de cada cidade a bandeira
+# Ao invés de fazer o caminho curto através do flag_collect.
+# Depois testo para ver se adicionar "-" ao site do flag_collect resolve ou não.
 flag_url <- function(x){
   
   print(x)
@@ -149,7 +155,7 @@ log <- furrr::future_map2_dfr(
   link_bandeiras$cidade_tratado,
      ~tryCatch(download.image(.x,.y),
                error = function(e) data.frame("flag" = .y,
-                                              "situacao" = "Ok")
+                                              "situacao" = "Problema")
                ))
 
 
