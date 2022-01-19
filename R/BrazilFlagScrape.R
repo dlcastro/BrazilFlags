@@ -1,4 +1,11 @@
 # Download Bandeiras municipais
+# Autor: Daniel Castro - https:://dlcastro.com
+# Fonte: crwflags.com
+# Justificativa: extremamente difícil de encontrar um repositório de bandeiras dos municípios do Brasil
+# Só consegui encontrar parte no Wikipedia inglês e parte nesse site. Por esse motivo, resolvi criar esse webscrape
+# E unificar os dados de forma facilitada em um só local.
+# Importante: muitas bandeiras são fotografias. Algumas estão em baixa qualidade enquanto outras estão aceitáveis.
+# Não há bandeiras em qualidade muito alta. Em outro momento buscarei essas bandeiras em qualidade melhor.
 library(renv)
 library(rvest)
 library(tidyverse)
@@ -8,11 +15,18 @@ library(furrr)
 library(stringr)
 library(readxl)
 library(writexl)
+library(progressr)
+library(glue)
+library(tictoc)
 
-
-# Utilizar 1 cores --------------------------------------------------------
+# Configurar processamento paralelo --------------------------------------------
 # Mude aqui para aumentar ou diminuir os Cores do processador em uso
-core <- 3
+
+# Remova o comentário abaixo do core e selecione a quantidade de processadores
+# que utilizará para realizar o trabalho
+tic()
+# core <- 3S
+
 plan(multisession, workers = core)
 set.seed(123)
 
@@ -30,36 +44,56 @@ fg_url <- "https://www.crwflags.com/fotw/images/b/"
 
 
 # Função apra coletar URL e baixar bandeira -------------------------------
-flag_collect <- function(x) {
-  print(x)
-
-  cidades <- rvest::read_html(paste0(url1, x, url2))
-
-
-  municipios <- cidades %>%
-    html_nodes("table") %>%
-    html_nodes("a") %>%
-    html_text() %>%
-    as.data.frame()
-
-
-  links <- cidades %>%
-    html_nodes("table") %>%
-    html_nodes("a") %>%
-    map(., html_attrs) %>%
-    map_df(~ as.list(.)) %>%
-    bind_cols(municipios) %>%
-    mutate(order = x) %>%
-    select(-name) %>%
-    rename(municipio = ".") %>%
-    na.omit() %>%
-    mutate(
-      site = paste0("https://www.crwflags.com/fotw/flags/", href),
-      cidade_tratado = stringi::stri_trans_general(municipio, "latin-ascii; upper"),
-      cidade_tratado = gsub("\\s", "_", cidade_tratado),
-      cidade_tratado = gsub("\\(", "", cidade_tratado),
-      cidade_tratado = gsub("\\)", "", cidade_tratado)
+flag_collect <- function(ordem) {
+  
+  #Adicionar controle de progressão 
+  p <- progressor(steps = length(ordem))
+  
+  # Realizar looping com processamento paralelo
+  flags <- furrr::future_map_dfr(
+    ordem,
+    possibly(~{
+      
+      # Indicador de progressão
+      p()
+      
+      cidades <- rvest::read_html(paste0(url1, .x, url2))
+      
+      
+      municipios <- cidades %>%
+        html_nodes("table") %>%
+        html_nodes("a") %>%
+        html_text() %>%
+        as.data.frame()
+      
+      
+      links <- cidades %>%
+        html_nodes("table") %>%
+        html_nodes("a") %>%
+        map(., html_attrs) %>%
+        map_df(~ as.list(.)) %>%
+        bind_cols(municipios) %>%
+        mutate(order = .x) %>%
+        select(-name) %>%
+        rename(municipio = ".") %>%
+        na.omit() %>%
+        mutate(
+          site = paste0("https://www.crwflags.com/fotw/flags/", href),
+          cidade_tratado = stringi::stri_trans_general(municipio, "latin-ascii; upper"),
+          cidade_tratado = gsub("\\s", "_", cidade_tratado),
+          cidade_tratado = gsub("\\(", "", cidade_tratado),
+          cidade_tratado = gsub("\\)", "", cidade_tratado)
+        )
+      
+    },
+    # Em caso de erro, criar df com mensagem de erro
+    otherwise = data.frame(href = "NA - ERROR")
     )
+  ) %>%
+    # Remover df com mensagem de erro
+    filter(href != "NA - ERROR")
+  
+  
 }
 
 
@@ -70,50 +104,78 @@ flag_collect <- function(x) {
 # Ou seja, irei buscar página por página de cada cidade a bandeira
 # Ao invés de fazer o caminho curto através do flag_collect.
 # Depois testo para ver se adicionar "-" ao site do flag_collect resolve ou não.
-flag_url <- function(x) {
-  print(x)
-  url_bandeira <- rvest::read_html(x)
-
-
-  indicacao <- url_bandeira %>%
-    html_nodes("a") %>%
-    html_text() %>%
-    map(., print) %>%
-    map_df(., data.frame)
-
-
-
-  fonte <- url_bandeira %>%
-    html_nodes("a") %>%
-    html_attrs() %>%
-    map(., print) %>%
-    map_df(., data.frame) %>%
-    bind_cols(indicacao) %>%
-    mutate(order = row_number()) %>%
-    rename(
-      fonte_a = .x..i.....1,
-      fonte_b = .x..i.....2
+flag_url <- function(urlcidade) {
+  
+  # Indicador de progressão para indicar downloadl da página
+  p <- progressor(steps = length(urlcidade))
+  
+  furrr::future_map_dfr(
+    urlcidade,
+    possibly(~{
+      
+      # Indicador de progressão
+      p()
+      
+      # Download html da cidade disponível
+      url_bandeira <- rvest::read_html(.x)
+      
+      indicacao <- url_bandeira %>%
+        html_nodes("a") %>%
+        html_text() %>%
+        map(., print) %>%
+        map_df(., data.frame)
+      
+      
+      
+      fonte <- url_bandeira %>%
+        html_nodes("a") %>%
+        html_attrs() %>%
+        map(., print) %>%
+        map_df(., data.frame) %>%
+        bind_cols(indicacao) %>%
+        mutate(order = row_number()) %>%
+        rename(
+          fonte_a = .x..i.....1,
+          fonte_b = .x..i.....2
+        ) %>%
+        filter(grepl("../images/b/", fonte_a, fixed = TRUE)) %>%
+        mutate(fonte_b = ifelse(grepl("../images/b/", fonte_a, fixed = TRUE),
+                                gsub("../images/b/",
+                                     "",
+                                     fonte_a,
+                                     fixed = T
+                                ),
+                                fonte_b
+        )) %>%
+        # Algumas vezes colocam o brasão e em outros a bandeira, totalizando duas imagens. Irei pegar a primeira.
+        # Fazer slice para proteger
+        slice(1) %>%
+        bind_cols(data.frame("fonte_original" = "url_bandeira")) %>%
+        select(fonte_b, fonte_original) %>%
+        pivot_wider(
+          names_from = "fonte_original",
+          values_from = "fonte_b"
+        ) %>%
+        mutate(site = {{ .x }}) %>%
+        mutate(url_bandeira = as.character(unlist(url_bandeira)))
+      
+    },
+             otherwise = data.frame(url_bandeira = "NA - ERROR")
+    )
+  ) %>%
+    left_join(flags, by = "site") %>%
+    mutate(
+      estado = stringr::str_split(municipio, "\\(") %>% 
+        map_chr(., ~ as.character(.x[2])),
+      estado = gsub("\\)", "", estado),
+      estado = str_trim(estado)
     ) %>%
-    filter(grepl("../images/b/", fonte_a, fixed = TRUE)) %>%
-    mutate(fonte_b = ifelse(grepl("../images/b/", fonte_a, fixed = TRUE),
-      gsub("../images/b/",
-        "",
-        fonte_a,
-        fixed = T
-      ),
-      fonte_b
-    )) %>%
-    # Algumas vezes colocam o brasão e em outros a bandeira por último.
-    # Fazer slice para proteger
-    slice(nrow(.)) %>%
-    bind_cols(data.frame("fonte_original" = "url_bandeira")) %>%
-    select(fonte_b, fonte_original) %>%
-    pivot_wider(
-      names_from = "fonte_original",
-      values_from = "fonte_b"
-    ) %>%
-    mutate(site = {{ x }}) %>%
-    mutate(url_bandeira = as.character(unlist(url_bandeira)))
+    left_join(siglas_estados, by = "estado") %>%
+    na.omit() %>%
+    distinct()
+
+
+
 
 
   #
@@ -139,36 +201,32 @@ download.image <- function(pasta,
 
 
 # Baixar url de cada cidade disponível no site ----------------------------
-flags <- furrr::future_map_dfr(
-  letters,
-  possibly(flag_collect,
-    otherwise = data.frame(href = "NA - ERROR")
-  )
-) %>%
-  filter(href != "NA - ERROR")
-
-
-
+glue::glue("Catalogar os municípios com bandeira!
+           
+           
+           ")
+with_progress({
+  flags <- flag_collect(letters)
+})
 
 # encontrar url da imagem de cada bandeira, contendo fonte e site  --------
-link_bandeiras <- furrr::future_map_dfr(
-  flags$site,
-  possibly(flag_url,
-    otherwise = data.frame(url_bandeira = "NA - ERROR")
-  )
-) %>%
-  left_join(flags, by = "site") %>%
-  mutate(
-    estado = stringr::str_split(municipio, "\\(") %>% map_chr(., ~ as.character(.x[2])),
-    estado = gsub("\\)", "", estado),
-    estado = str_trim(estado)
-  ) %>%
-  left_join(siglas_estados, by = "estado") %>%
-  na.omit() %>%
-  distinct()
+glue::glue("Encontrar URL de cada Bandeira!
+           
+           
+           ")
+with_progress({
+  link_bandeiras <-  flag_url(flags$site)
+  
+})
+
+
+
+
+
 
 # Iniciar download bandeiras ------------------------------------------------
 
+# Depois coloco progress aqui
 log <- purrr::map_df(
   unique(link_bandeiras$sigla),
   function(z) {
@@ -195,11 +253,16 @@ log <- purrr::map_df(
   }
 )
 
+
+# Criar log para indicar o resultado do scrape
 log_unificado <- log %>% 
   left_join(link_bandeiras, by = c("flag"="cidade_tratado")) %>% 
-  select(municipio, estado_sigla = sigla, flag, situacao, fonte = site, ) %>% 
+  select(municipio, estado_sigla = sigla, flag, situacao, fonte = site) %>% 
   mutate(flag = paste0("Result/",estado_sigla,"/",flag,".gif"))
 
 
 
-writexl::write_xlsx(log_unificado, path = "Result/bandeiras_municipais_download_BR.xlsx")
+writexl::write_xlsx(log_unificado, "Result/ListagemBandeirasBR.xlsx")
+
+
+toc()

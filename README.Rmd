@@ -1,0 +1,64 @@
+---
+title: "Bandeiras dos municípios brasileiros"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+[![Twitter](https://img.shields.io/twitter/url?label=Follow%20%40DLCastroo&style=social&url=https%3A%2F%2Ftwitter.com%2FDLCastroo)](https://twitter.com/DLCastroo) [![Share](https://img.shields.io/twitter/url?label=Share%20BrazilFlagsR&style=social&url=https%3A%2F%2Fgithub.com%2Fdlcastro%2FBrazilFlagR)](http://www.twitter.com/share?url=Repositório com mais de 2700 bandeiras de municípios brasileiros: https://github.com/dlcastro/BrazilFlagR)
+
+Diante da dificuldade de encontrar bandeiras dos municípios brasileiros de forma simples e rápida, criei um  Web Scraper em linguagem R ([BrazilFlagScrape.R](R/BrazilFlagScrape.R)) para unificar em um repositório as imagens obtidas através do site [Flags of the world](https://www.crwflags.com/fotw/flags/br-.html).
+
+O arquivo comprimido com todas as bandeiras coletadas pode ser baixado [AQUI](Result/BandeirasMunicipaisBrasil.rar). Após extraí-lo, as bandeiras estarão agrupadas por pastas conforme seu estado. O arquivo excel `ListagemBandeirasBR.xlsx` dispõe da listagem dos municípios, assim como indica pasta em que está localizada a bandeira e a fonte de onde foi coletada pelo Web Scraper.
+A qualidade das imagens não é alta e é sabido que há algumas *poucas* bandeiras repetidas.
+
+<h2> Tabela de bandeiras dos municípios por estado do Brasil </h2>
+
+**Clique abaixo em um estado para ver as banderias municipais encontradas.**
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
+library(knitr)
+library(dplyr)
+library(pander)
+library(glue)
+library(purrr)
+
+bandeiras <- readxl::read_excel("Result/ListagemBandeirasBR.xlsx") %>% 
+  filter(situacao != "Problema")
+
+
+estados <- readxl::read_excel("org/estados_siglas.xlsx") %>% 
+    mutate(nome = paste0(SIGLA, " - ",ESTADO)) %>% 
+    arrange(SIGLA)
+
+nomes <- estados$nome
+# 
+lista <- map(estados$SIGLA, function(x){
+
+    tabela <- bandeiras %>%
+      filter(estado_sigla == {{ x }}) %>%
+      arrange(estado_sigla, municipio) %>%
+      # filter(situacao != "Problema") %>%
+      mutate(
+        Bandeira = paste0("![](",flag,"){ width=50%}"),
+
+      )%>%
+      select(Bandeira, Município = municipio) %>%
+      pander(split.cells = 5, split.table = Inf)
+
+  })
+
+
+
+cat(paste0("<details>
+  <summary>
+  <b>",
+  nomes,
+  "<br>
+  </summary>",
+  lista,
+  "</details>"))
+
+```
+
