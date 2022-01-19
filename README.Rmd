@@ -6,7 +6,7 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-[![Twitter](https://img.shields.io/twitter/url?label=Follow%20%40DLCastroo&style=social&url=https%3A%2F%2Ftwitter.com%2FDLCastroo)](https://twitter.com/DLCastroo) [![Share](https://img.shields.io/twitter/url?label=Share%20BrazilFlagsR&style=social&url=https%3A%2F%2Fgithub.com%2Fdlcastro%2FBrazilFlagR)](http://www.twitter.com/share?url=Repositório com mais de 2700 bandeiras de municípios brasileiros: https://github.com/dlcastro/BrazilFlagR)
+[![Twitter](https://img.shields.io/twitter/url?label=Follow%20%40DLCastroo&style=social&url=https%3A%2F%2Ftwitter.com%2FDLCastroo)](https://twitter.com/DLCastroo) [![Share](https://img.shields.io/twitter/url?label=Share%20BrazilFlags&style=social&url=https%3A%2F%2Fgithub.com%2Fdlcastro%2FBrazilFlagR)](http://www.twitter.com/share?url=Repositório com mais de 2700 bandeiras de municípios brasileiros: https://github.com/dlcastro/BrazilFlags)
 
 Diante da dificuldade de encontrar bandeiras dos municípios brasileiros de forma simples e rápida, criei um  Web Scraper em linguagem R ([BrazilFlagScrape.R](R/BrazilFlagScrape.R)) para unificar em um repositório as imagens obtidas através do site [Flags of the world](https://www.crwflags.com/fotw/flags/br-.html).
 
