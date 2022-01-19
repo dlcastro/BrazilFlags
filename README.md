@@ -16,7 +16,7 @@ as bandeiras estarão agrupadas por pastas conforme seu estado. O arquivo
 excel `ListagemBandeirasBR.xlsx` dispõe da listagem dos municípios,
 assim como indica pasta em que está localizada a bandeira e a fonte de
 onde foi coletada pelo Web Scraper. A qualidade das imagens não é alta e
-é sabido que há algumas *poucas* bandeiras repetidas.
+é sabido que há algumas *poucas* bandeiras repetidas. Ao total são 2732 bandeiras.
 
 <h2>
 Tabela de bandeiras dos municípios por estado do Brasil
