@@ -2,7 +2,7 @@ Bandeiras dos municípios brasileiros
 ================
 
 [![Twitter](https://img.shields.io/twitter/url?label=Follow%20%40DLCastroo&style=social&url=https%3A%2F%2Ftwitter.com%2FDLCastroo)](https://twitter.com/DLCastroo)
-[![Share](https://img.shields.io/twitter/url?label=Share%20BrazilFlagsR&style=social&url=https%3A%2F%2Fgithub.com%2Fdlcastro%2FBrazilFlagR)](http://www.twitter.com/share?url=Repositório%20com%20mais%20de%202700%20bandeiras%20de%20municípios%20brasileiros:%20https://github.com/dlcastro/BrazilFlagR)
+[![Share](https://img.shields.io/twitter/url?label=Share%20BrazilFlags&style=social&url=https%3A%2F%2Fgithub.com%2Fdlcastro%2FBrazilFlagR)](http://www.twitter.com/share?url=Repositório%20com%20mais%20de%202700%20bandeiras%20de%20municípios%20brasileiros:%20https://github.com/dlcastro/BrazilFlags)
 
 Diante da dificuldade de encontrar bandeiras dos municípios brasileiros
 de forma simples e rápida, criei um Web Scraper em linguagem R
