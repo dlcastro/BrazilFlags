@@ -11,8 +11,8 @@ repositório as imagens obtidas através do site [Flags of the
 world](https://www.crwflags.com/fotw/flags/br-.html).
 
 O arquivo comprimido com todas as bandeiras coletadas pode ser baixado
-[AQUI](Result/BandeirasMunicipaisBrasil.rar). Após extraí-lo, as
-bandeiras estarão agrupadas por pastas conforme seu estado. O arquivo
+[AQUI](Result/BandeirasMunicipaisBrasil.rar?raw=true). Após extraí-lo,
+as bandeiras estarão agrupadas por pastas conforme seu estado. O arquivo
 excel `ListagemBandeirasBR.xlsx` dispõe da listagem dos municípios,
 assim como indica pasta em que está localizada a bandeira e a fonte de
 onde foi coletada pelo Web Scraper. A qualidade das imagens não é alta e
